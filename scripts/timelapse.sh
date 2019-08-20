@@ -16,20 +16,22 @@ if [ $# -lt 1 ]
 fi
 
 # find thumbnails and rename them to match full images names
-find "images/$1/thumbnails" -name "*.$EXTENSION" -size 0 -delete
-ls -rt images/$1/thumbnails/*.$EXTENSION |
-gawk 'BEGIN{ a=1 }{ printf "mv -v %s images/'$1'/thumbnails/%04d.'$EXTENSION'\n", $0, a++ }' |
+find "/home/pi/allsky/images/$1/thumbnails" -name "*.$EXTENSION" -size 0 -delete
+ls -rt /home/pi/allsky/images/$1/thumbnails/*.$EXTENSION |
+gawk 'BEGIN{ a=1 }{ printf "ln -s %s /home/pi/allsky/images/'$1'/thumbnails/%04d.'$EXTENSION'\n", $0, a++ }' |
 bash
 
 # find images, rename images sequentially and start avconv to build mp4; upload mp4 and move directory
-find "images/$1" -name "*.$EXTENSION" -size 0 -delete
-ls -rt images/$1/*.$EXTENSION |
-gawk 'BEGIN{ a=1 }{ printf "mv -v %s images/'$1'/%04d.'$EXTENSION'\n", $0, a++ }' |
+find "/home/pi/allsky/images/$1" -name "*.$EXTENSION" -size 0 -delete
+ls -rt /home/pi/allsky/images/$1/*.$EXTENSION |
+gawk 'BEGIN{ a=1 }{ printf "ln -s %s /home/pi/allsky/images/'$1'/%04d.'$EXTENSION'\n", $0, a++ }' |
 bash
-ffmpeg -y -f image2 -r 25 -i images/$1/%04d.$EXTENSION -vcodec libx264 -b:v 2000k -pix_fmt yuv420p images/$1/allsky-$1.mp4
+ffmpeg -y -f image2 -r 25 -i /home/pi/allsky/images/$1/%04d.$EXTENSION -vcodec libx264 -b:v 2000k -pix_fmt yuv420p /home/pi/allsky/images/$1/allsky-$1.mp4
 
 if [ "$UPLOAD_VIDEO" = true ] ; then
-	lftp "$PROTOCOL"://"$USER":"$PASSWORD"@"$HOST":"$MP4DIR" -e "set net:max-retries 1; put images/$1/allsky-$1.mp4; bye"
+	lftp "$PROTOCOL"://"$USER":"$PASSWORD"@"$HOST":"$MP4DIR" -e "set net:max-retries 1; put /home/pi/allsky/images/$1/allsky-$1.mp4; bye"
 fi
 
+rm /home/pi/allsky/images/$1/thumbnails/????.$EXTENSION
+rm /home/pi/allsky/images/$1/????.$EXTENSION
 echo -en "* ${GREEN}Timelapse was created${NC}\n"
